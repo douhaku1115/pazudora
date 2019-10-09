@@ -18,7 +18,7 @@ enum {
 	};
 
 int cells[FIELD_HEIGHT][FIELD_WIDTH];
-int selectedX, selectedY;
+int selectedX=-1, selectedY=-1;
 
 char cellAA[][2 + 1] = {
 	"ÅE",//CELL_TYPE_BLOCK_0,
@@ -42,25 +42,36 @@ int main() {
 
 	while (1) {
 		system("cls");
-		for (int y = 0; y < FIELD_HEIGHT; y++){
+		for (int y = 0; y < FIELD_HEIGHT; y++) {
 			for (int x = 0; x < FIELD_WIDTH; x++)
 				if ((x == cursorX) && (y == cursorY))
 					printf("Åù");
 				else
-					printf("%s",cellAA[cells[y][x]]);
+					printf("%s", cellAA[cells[y][x]]);
 			if (y == selectedY)
 				printf("Å©");
 			printf("\n");
 		}
 		for (int x = 0; x < FIELD_WIDTH; x++)
 			printf("%s", (x == selectedX) ? "Å™" : "Å@");
-		switch (_getch()) {
 
+		switch (_getch()) {
 		case'w':cursorY--; break;
 		case's':cursorY++; break;
 		case'a':cursorX--; break;
 		case'd':cursorX++; break;
+		default:
+			if (selectedX < 0) {
+				selectedX = cursorX;
+				selectedY = cursorY;
+			}
+			else {
+				int temp = cells[cursorY][cursorX];
+				cells[cursorY][cursorX] = cells[selectedY][selectedX];
+				cells[selectedY][selectedX] = temp;
+				selectedX = selectedY = -1;
+			}
+			break;
 		}
-
 	}
 }

@@ -35,7 +35,7 @@ char cellAA[][2 + 1] = {
 
 };
 int cursorX, cursorY;
-bool locked = false;
+bool locked = true;
 int getConnectedBlockCount(int _x, int _y, int _cellType, int _count) {
 	if (
 		(_x<0 || _x>FIELD_WIDTH || _y<0 || _y>FIELD_HEIGHT)
@@ -65,6 +65,18 @@ void eraseConnectedBlocks(int _x, int _y, int _cellType) {
 	eraseConnectedBlocks(_x-1, _y, _cellType);
 	eraseConnectedBlocks(_x, _y+1, _cellType);
 	eraseConnectedBlocks(_x+1 ,_y, _cellType);
+}
+void eraseConnectedBlockAll() {
+	memset(checked, 0, sizeof(checked));
+
+	for (int y = 0; y < FIELD_HEIGHT; y++)
+		for (int x = 0; x < FIELD_WIDTH; x++) {
+			int n = getConnectedBlockCount(x, y, cells[y][x], 0);
+			if (n >= 3) {
+				eraseConnectedBlocks(x, y, cells[y][x]);
+				locked = true;
+			}
+		}
 }
 void display() {
 	system("cls");
@@ -97,12 +109,20 @@ int main() {
 				locked = false;
 				for (int y = FIELD_HEIGHT - 2; y >= 0; y--)
 					for (int x = 0; x < FIELD_WIDTH; x++)
-						if ((cells[y][x] != CELL_TYPE_NONE) &&
-							(cells[y + 1][x] == CELL_TYPE_NONE)) {
+						if ((cells[y][x] != CELL_TYPE_NONE) &&//ブロック有る
+							(cells[y + 1][x] == CELL_TYPE_NONE)) {//s下にブロック無し
 							cells[y + 1][x] = cells[y][x];
 							cells[y][x] = CELL_TYPE_NONE;
 							locked = true;
 						}
+				for (int x = 0; x < FIELD_WIDTH; x++)
+					if (cells[0][x] == CELL_TYPE_NONE) {
+						cells[0][x] = CELL_TYPE_BLOCK_0 + rand() % BLOCK_TYPE_MAX;
+						locked = true;
+					}
+				if (!locked) {
+					eraseConnectedBlockAll();
+				}
 			}
 			display();
 			
@@ -120,23 +140,23 @@ int main() {
 					if (selectedX < 0) {
 						selectedX = cursorX;
 						selectedY = cursorY;
+						
 					}
 					else {
-						int temp = cells[cursorY][cursorX];
-						cells[cursorY][cursorX] = cells[selectedY][selectedX];
-						cells[selectedY][selectedX] = temp;
-						memset(checked, 0, sizeof(checked));
+						int distance = abs(selectedX - cursorX) + abs(selectedY - cursorY);
+						if(distance==0)selectedX = selectedY = -1;
+						else if (distance == 1) {
+							int temp = cells[cursorY][cursorX];
+							cells[cursorY][cursorX] = cells[selectedY][selectedX];
+							cells[selectedY][selectedX] = temp;
+							
+							eraseConnectedBlockAll();
+							selectedX = selectedY = -1;
+							locked = true;
+						}
+						else
+							printf("\a");
 
-						for (int y = 0; y < FIELD_HEIGHT; y++)
-							for (int x = 0; x < FIELD_WIDTH; x++) {
-								int n = getConnectedBlockCount(x, y, cells[y][x], 0);
-								if (n >= 3)
-									eraseConnectedBlocks(x, y, cells[y][x]);
-							}
-
-
-						selectedX = selectedY = -1;
-						locked = true;
 					}
 					break;
 				}
